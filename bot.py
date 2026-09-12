@@ -180,7 +180,7 @@ if __name__ == '__main__':
             
     try:
         bot.remove_webhook()
-        bot.set_webhook(url=RENDER_URL)
+        bot.set_webhook(url=RENDER_URL + "/webhook")
         print("Вебхук успешно установлен в Telegram!")
     except Exception as e:
         print(f"Ошибка установки вебхука: {e}")

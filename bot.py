@@ -13,7 +13,7 @@ AITUNNEL_TOKEN = "sk-w7178jSfKD6ttClL6jKlJ67BPKfJDmZL"  # Вставляем с�
 
 # Прямые рабочие эндпоинты без всяких прокси-шлюзов
 AITUNNEL_URL = "https://api.proxyapi.ru/v1/chat/completions"
-WHISPER_URL = "https://api.aitunnel.ru/v1/audio/transcriptions"
+WHISPER_URL = "https://api.proxyapi.ru/v1/audio/transcriptions"
 
 BOT_NAME = "Раджу"
 bot = telebot.TeleBot(TELEGRAM_TOKEN)

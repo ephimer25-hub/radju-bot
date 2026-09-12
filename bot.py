@@ -72,12 +72,6 @@ def ask_grok(messages):
     except Exception as e:
         return f"Ошибка Grok 4.5: {str(e)}"
 
-    try:
-        response = requests.post(AITUNNEL_URL, headers=headers, json=payload, timeout=30)
-        return response.json()['choices']['message']['content']
-    except Exception as e:
-        return f"Ошибка Grok 4.5: {str(e)}"
-
 @bot.message_handler(commands=['start'])
 def start_cmd(message):
     bot.reply_to(message, "Привет! Я Раджа. Твой верный друг на базе Grok 4.5. Я полностью готов к работе!")

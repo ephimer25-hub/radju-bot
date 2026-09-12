@@ -3,3 +3,4 @@ services:
     name: radja-bot-free
     runtime: python
     plan: free
+    startCommand: python bot.py

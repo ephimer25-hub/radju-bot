@@ -7,7 +7,7 @@ import base64
 
 # --- НАСТРОЙКИ И ТОКЕНЫ ---
 TELEGRAM_TOKEN = "8804377859:AAFxUkT63bRc05ORljg9VuDbG-L_GkF3OEI"  # Этот токен оставляем прежним, который от BotFather
-AITUNNEL_TOKEN = "sk-w7178jSfKD6ttClL6jKlJ67BPKfJDmZLI"  # Вставляем сюда ключ, который начинается на pk-
+AITUNNEL_TOKEN = "sk-w7178jSfKD6ttClL6jKlJ67BPKfJDmZL"  # Вставляем сюда ключ, который начинается на pk-
 
 # Меняем старый адрес ИИ-Туннеля на прямой адрес ProxyAPI
 

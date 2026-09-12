@@ -50,15 +50,28 @@ def get_history(user_id, limit=10):
     return messages
 
 def ask_grok(messages):
+    # Добавили имитацию браузера (User-Agent), чтобы туннель не блокировал пустые запросы
     headers = {
         "Authorization": f"Bearer {AITUNNEL_TOKEN}",
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
     }
     payload = {
         "model": "grok-4.5", 
         "messages": messages,
         "temperature": 0.7
     }
+    try:
+        response = requests.post(AITUNNEL_URL, headers=headers, json=payload, timeout=30)
+        
+        # Если туннель вернул ошибку авторизации или баланса, выводим её для проверки
+        if response.status_code != 200:
+            return f"Ответ ИИ-Туннеля (Код {response.status_code}): {response.text}"
+            
+        return response.json()['choices']['message']['content']
+    except Exception as e:
+        return f"Ошибка Grok 4.5: {str(e)}"
+
     try:
         response = requests.post(AITUNNEL_URL, headers=headers, json=payload, timeout=30)
         return response.json()['choices']['message']['content']

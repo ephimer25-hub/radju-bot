@@ -12,7 +12,7 @@ AITUNNEL_TOKEN = "sk-aitunnel-051whwYPhpaEB38kc18DownfqjPw5fW1"
 AITUNNEL_URL = "https://api.aitunnel.ru/v1/chat/completions"
 WHISPER_URL = "https://api.aitunnel.ru/v1/audio/transcriptions"
 
-BOT_NAME = "Раджа"
+BOT_NAME = "Раджу"
 bot = telebot.TeleBot(TELEGRAM_TOKEN)
 
 # Системный промт

@@ -225,34 +225,29 @@ def handle_voice(message):
     ai_response = ask_grok(get_history(user_id))
     bot.reply_to(message, f"🎙 *Вы сказали:* {user_text}\n\n*Раджа:* {ai_response}", parse_mode="Markdown")
 
-if name == 'main':
+if __name__ == '__main__':
     init_db()
     print("Раджа запускается в режиме вебхуков...")
     
-    # ⚠️ https://radju-bot.onrender.com (обязательно с https:// и без косой черты в конце!)
+    # Ссылка на ваш сервер Render
     RENDER_URL = "https://onrender.com" 
     
     import http.server
     import socketserver
-    import json
     
     class WebhookHandler(http.server.BaseHTTPRequestHandler):
         def do_POST(self):
-            # Telegram прислал новое сообщение!
             content_length = int(self.headers['Content-Length'])
             post_data = self.rfile.read(content_length).decode('utf-8')
             
-            # Передаем данные в библиотеку telebot для обработки текста/голоса/фото
             update = telebot.types.Update.de_json(post_data)
             bot.process_new_updates([update])
             
-            # Отвечаем Телеграму, что всё получили успешно
             self.send_response(200)
             self.end_headers()
             self.wfile.write(b"OK")
             
         def do_GET(self):
-            # Заглушка для Render, чтобы он видел рабочий порт
             self.send_response(200)
             self.end_headers()
             self.wfile.write(b"Raja Bot is Live!")
@@ -264,18 +259,11 @@ if name == 'main':
             print(f"Сервер слушает порт {port}...")
             httpd.serve_forever()
             
-    # Принудительно ставим вебхук в Telegram на наш адрес Render
     try:
         bot.remove_webhook()
-        bot.set_webhook(url=f"{RENDER_URL}/webhook")
+        bot.set_webhook(url=RENDER_URL)
         print("Вебхук успешно установлен в Telegram!")
     except Exception as e:
         print(f"Ошибка установки вебхука: {e}")
         
-    # Запускаем наш веб-сервер
     run_server()
-
-    # Запускаем самого Раджу
-    bot.infinity_polling()
-
-

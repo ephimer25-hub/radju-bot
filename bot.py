@@ -197,6 +197,9 @@ def handle_photo(message):
         ],
         "temperature": 0.7
     }
+        ],
+        "temperature": 0.7
+    }
             
         ai_response = response.json()['choices'][0]['message']['content']
         bot.reply_to(message, ai_response)

@@ -169,20 +169,21 @@ def handle_text(message):
     save_message(user_id, "assistant", ai_response)
     bot.reply_to(message, ai_response, parse_mode="Markdown")
 
-@bot.message_handler(content_types=['photo'])
 def handle_photo(message):
     user_id = message.chat.id
     bot.send_chat_action(user_id, 'typing')
-    file_info = bot.get_file(message.photo[-1].file_id)
     
-    # Собираем правильную ссылку, защищенную от переводчика
-    file_url = "https://" + "api." + "telegram.org" + "/file/bot" + TELEGRAM_TOKEN + "/" + file_info.file_path
+    file_info = bot.get_file(message.photo[-1].file_id)
+    url = "https://" + "api." + "telegram.org" + "/file/bot" + TELEGRAM_TOKEN + "/" + file_info.file_path
+    photo_bytes = requests.get(url).content
+    
+    base64_image = base64.b64encode(photo_bytes).decode('utf-8')
     
     messages = [
         {"role": "system", "content": SYSTEM_PROMPT},
         {"role": "user", "content": [
             {"type": "text", "text": message.caption or "Что на фото?"}, 
-            {"type": "image_url", "image_url": {"url": file_url}}
+            {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}}
         ]}
     ]
     ai_response = ask_grok(messages)

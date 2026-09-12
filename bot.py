@@ -5,7 +5,7 @@ import telebot
 from threading import Thread
 
 # --- НАСТРОЙКИ И ТОКЕНЫ ---
-TELEGRAM_TOKEN = "8804377859:AAF6XGYd_dSXgVOqAfChIvN3viXW93f0mYE"
+TELEGRAM_TOKEN = "8804377859:AAFxUkT63bRc05ORljg9VuDbG-L_GkF3OEI"
 AITUNNEL_TOKEN = "sk-aitunnel-051whwYPhpaEB38kc18DownfqjPw5fW1"
 
 # Прямые рабочие эндпоинты без всяких прокси-шлюзов

@@ -10,7 +10,6 @@ TELEGRAM_TOKEN = "8804377859:AAFxUkT63bRc05ORljg9VuDbG-L_GkF3OEI"  # Этот т
 AITUNNEL_TOKEN = "sk-w7178jSfKD6ttClL6jKlJ67BPKfJDmZLI"  # Вставляем сюда ключ, который начинается на pk-
 
 # Меняем старый адрес ИИ-Туннеля на прямой адрес ProxyAPI
-AITUNNEL_URL = "https://proxyapi.ru"
 
 # Прямые рабочие эндпоинты без всяких прокси-шлюзов
 AITUNNEL_URL = "https://api.proxyapi.ru/v1/chat/completions"

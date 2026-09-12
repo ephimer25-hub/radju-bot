@@ -6,11 +6,14 @@ from threading import Thread
 import base64
 
 # --- НАСТРОЙКИ И ТОКЕНЫ ---
-TELEGRAM_TOKEN = "8804377859:AAFxUkT63bRc05ORljg9VuDbG-L_GkF3OEI"
-AITUNNEL_TOKEN = "sk-aitunnel-051whwYPhpaEB38kc18DownfqjPw5fW1"
+TELEGRAM_TOKEN = "8804377859:AAFxUkT63bRc05ORljg9VuDbG-L_GkF3OEI"  # Этот токен оставляем прежним, который от BotFather
+AITUNNEL_TOKEN = "sk-w7178jSfKD6ttClL6jKlJ67BPKfJDmZLI"  # Вставляем сюда ключ, который начинается на pk-
+
+# Меняем старый адрес ИИ-Туннеля на прямой адрес ProxyAPI
+AITUNNEL_URL = "https://proxyapi.ru"
 
 # Прямые рабочие эндпоинты без всяких прокси-шлюзов
-AITUNNEL_URL = "https://api.aitunnel.ru/v1/chat/completions"
+AITUNNEL_URL = "https://api.proxyapi.ru/v1/chat/completions"
 WHISPER_URL = "https://api.aitunnel.ru/v1/audio/transcriptions"
 
 BOT_NAME = "Раджу"

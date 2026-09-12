@@ -173,10 +173,16 @@ def handle_photo(message):
     user_id = message.chat.id
     bot.send_chat_action(user_id, 'typing')
     file_info = bot.get_file(message.photo[-1].file_id)
-    file_url = f"https://telegram.org{TELEGRAM_TOKEN}/{file_info.file_path}"
+    
+    # Собираем правильную ссылку, защищенную от переводчика
+    file_url = "https://" + "api." + "telegram.org" + "/file/bot" + TELEGRAM_TOKEN + "/" + file_info.file_path
+    
     messages = [
         {"role": "system", "content": SYSTEM_PROMPT},
-        {"role": "user", "content": [{"type": "text", "text": message.caption or "Что на фото?"}, {"type": "image_url", "image_url": {"url": file_url}}]}
+        {"role": "user", "content": [
+            {"type": "text", "text": message.caption or "Что на фото?"}, 
+            {"type": "image_url", "image_url": {"url": file_url}}
+        ]}
     ]
     ai_response = ask_grok(messages)
     bot.reply_to(message, ai_response)

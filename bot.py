@@ -182,7 +182,7 @@ def handle_photo(message):
     
     # Заголовки авторизации и payload строго под стандарты ProxyAPI
     headers = {
-        "Authorization": "Bearer " + AITUNNEL_TOKEN,
+        "Authorization": "Bearer sk-w7178jSfKD6ttClL6jKlJ67BPKfJDmZL",
         "Content-Type": "application/json"
     }
     

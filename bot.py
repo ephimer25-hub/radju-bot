@@ -91,6 +91,31 @@ def check_for_file_request(message, text):
             return True
     return False
 
+if __name__ == '__main__':
+    init_db()
+    print("Раджа запущен...")
+    
+    # Создаем простейшую веб-заглушку, чтобы Render видел порт и не отключал бота
+    import http.server
+    import socketserver
+    
+    def run_dummy_server():
+        port = int(os.environ.get("PORT", 10000))
+        handler = http.server.SimpleHTTPRequestHandler
+        with socketserver.TCPServer(("", port), handler) as httpd:
+            httpd.serve_forever()
+            
+    # Запускаем сайт в фоновом потоке, чтобы он не мешал работе бота
+    Thread(target=run_dummy_server, daemon=True).start()
+    
+    # Запускаем самого Раджу
+    bot.infinity_polling()
+
+    
+    # Запускаем самого Раджу
+    bot.infinity_polling()
+
+
 @bot.message_handler(content_types=['text'])
 def handle_text(message):
     user_id = message.chat.id

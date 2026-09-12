@@ -180,9 +180,8 @@ def handle_photo(message):
     
     base64_image = base64.b64encode(photo_bytes).decode('utf-8')
     
-    # Заголовки авторизации и payload строго под стандарты ProxyAPI
     headers = {
-        "Authorization": "Bearer sk-w7178jSfKD6ttClL6jKlJ67BPKfJDmZL",
+        "Authorization": "Bearer sk-w7178jSfKD6ttCLl6jk1J67BPKfFJDmZL",
         "Content-Type": "application/json"
     }
     
@@ -197,10 +196,12 @@ def handle_photo(message):
         ],
         "temperature": 0.7
     }
-        ],
-        "temperature": 0.7
-    }
-            
+    
+    try:
+        response = requests.post(AITUNNEL_URL, headers=headers, json=payload, timeout=30)
+        if response.status_code != 200:
+            bot.reply_to(message, "Ошибка ProxyAPI (Код " + str(response.status_code) + "): " + response.text)
+            return
         ai_response = response.json()['choices'][0]['message']['content']
         bot.reply_to(message, ai_response)
     except Exception as e:

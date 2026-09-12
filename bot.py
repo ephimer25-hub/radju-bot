@@ -69,7 +69,8 @@ def ask_grok(messages):
         if response.status_code != 200:
             return f"Ответ ИИ-Туннеля (Код {response.status_code}): {response.text}"
             
-        return response.json()['choices']['message']['content']
+        return response.json()['choices'][0]['message']['content']
+
     except Exception as e:
         return f"Ошибка Grok 4.5: {str(e)}"
 def check_for_file_request(message, text):

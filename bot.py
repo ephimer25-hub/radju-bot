@@ -3,17 +3,14 @@ import sqlite3
 import requests
 import telebot
 from threading import Thread
-import base64
 
 # --- НАСТРОЙКИ И ТОКЕНЫ ---
-TELEGRAM_TOKEN = "8804377859:AAHybYDorTb9c4j-o90D2tHYr_x2NNo0qaE"  # Этот токен оставляем прежним, который от BotFather
-AITUNNEL_TOKEN = "sk-w7178jSfKD6ttClL6jKlJ67BPKfJDmZL"  # Вставляем сюда ключ, который начинается на pk-
-
-# Меняем старый адрес ИИ-Туннеля на прямой адрес ProxyAPI
+TELEGRAM_TOKEN = "8804377859:AAHybYDorTb9c4j-o90D2tHYr_x2NNo0qaE"
+AITUNNEL_TOKEN = "sk-w7178jSfKD6ttClL6jKlJ67BPKfJDmZLI"
 
 # Прямые рабочие эндпоинты без всяких прокси-шлюзов
-AITUNNEL_URL = "https://api.proxyapi.ru/v1/chat/completions"
-WHISPER_URL = "https://api.proxyapi.ru/v1/audio/transcriptions"
+AITUNNEL_URL = "https://api.aitunnel.ru/v1/chat/completions"
+WHISPER_URL = "https://api.aitunnel.ru/v1/audio/transcriptions"
 
 BOT_NAME = "Раджу"
 bot = telebot.TeleBot(TELEGRAM_TOKEN)
@@ -54,12 +51,14 @@ def get_history(user_id, limit=10):
     return messages
 
 def ask_grok(messages):
+    # Добавили имитацию браузера (User-Agent), чтобы туннель не блокировал пустые запросы
     headers = {
-        "Authorization": "Bearer " + AITUNNEL_TOKEN,
-        "Content-Type": "application/json"
+        "Authorization": f"Bearer {AITUNNEL_TOKEN}",
+        "Content-Type": "application/json",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
     }
     payload = {
-        "model": "x-ai/grok-4.5",  
+        "model": "grok-4.5", 
         "messages": messages,
         "temperature": 0.7
     }
@@ -173,39 +172,14 @@ def handle_text(message):
 def handle_photo(message):
     user_id = message.chat.id
     bot.send_chat_action(user_id, 'typing')
-    
     file_info = bot.get_file(message.photo[-1].file_id)
-    url = "https://" + "api." + "telegram.org" + "/file/bot" + TELEGRAM_TOKEN + "/" + file_info.file_path
-    photo_bytes = requests.get(url).content
-    
-    base64_image = base64.b64encode(photo_bytes).decode('utf-8')
-    
-    headers = {
-        "Authorization": "Bearer sk-w7178jSfKD6ttCLl6jk1J67BPKfFJDmZL",
-        "Content-Type": "application/json"
-    }
-    
-    payload = {
-        "model": "x-ai/grok-4.5", 
-        "messages": [
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": [
-                {"type": "text", "text": message.caption or "Что на фото?"}, 
-                {"type": "image_url", "image_url": {"url": "data:image/jpeg;base64," + base64_image}}
-            ]}
-        ],
-        "temperature": 0.7
-    }
-    
-    try:
-        response = requests.post(AITUNNEL_URL, headers=headers, json=payload, timeout=30)
-        if response.status_code != 200:
-            bot.reply_to(message, "Ошибка ProxyAPI (Код " + str(response.status_code) + "): " + response.text)
-            return
-        ai_response = response.json()['choices'][0]['message']['content']
-        bot.reply_to(message, ai_response)
-    except Exception as e:
-        bot.reply_to(message, "Ошибка при обработке фото: " + str(e))
+    file_url = f"https://telegram.org{TELEGRAM_TOKEN}/{file_info.file_path}"
+    messages = [
+        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "user", "content": [{"type": "text", "text": message.caption or "Что на фото?"}, {"type": "image_url", "image_url": {"url": file_url}}]}
+    ]
+    ai_response = ask_grok(messages)
+    bot.reply_to(message, ai_response)
 
 @bot.message_handler(content_types=['voice'])
 def handle_voice(message):
@@ -227,43 +201,26 @@ def handle_voice(message):
 
 if __name__ == '__main__':
     init_db()
-    print("Раджа запускается в режиме вебхуков...")
+    print("Раджа запущен...")
     
-    # Ссылка на ваш сервер Render
-    RENDER_URL = "https://onrender.com" 
-    
+    # Принудительно очищаем старые зависшие сессии в Telegram, убирая конфликт 409
+    try:
+        bot.delete_webhook(drop_pending_updates=True)
+    except:
+        pass
+        
+    # Создаем простейшую веб-заглушку, чтобы Render видел порт и не отключал бота
     import http.server
     import socketserver
     
-    class WebhookHandler(http.server.BaseHTTPRequestHandler):
-        def do_POST(self):
-            content_length = int(self.headers['Content-Length'])
-            post_data = self.rfile.read(content_length).decode('utf-8')
-            
-            update = telebot.types.Update.de_json(post_data)
-            bot.process_new_updates([update])
-            
-            self.send_response(200)
-            self.end_headers()
-            self.wfile.write(b"OK")
-            
-        def do_GET(self):
-            self.send_response(200)
-            self.end_headers()
-            self.wfile.write(b"Raja Bot is Live!")
-
-    def run_server():
+    def run_dummy_server():
         port = int(os.environ.get("PORT", 10000))
-        socketserver.TCPServer.allow_reuse_address = True
-        with socketserver.TCPServer(("", port), WebhookHandler) as httpd:
-            print(f"Сервер слушает порт {port}...")
+        handler = http.server.SimpleHTTPRequestHandler
+        with socketserver.TCPServer(("", port), handler) as httpd:
             httpd.serve_forever()
             
-    try:
-        bot.remove_webhook()
-        bot.set_webhook(url=RENDER_URL)
-        print("Вебхук успешно установлен в Telegram!")
-    except Exception as e:
-        print(f"Ошибка установки вебхука: {e}")
-        
-    run_server()
+    # Запускаем сайт в фоновом потоке, чтобы он не мешал работе бота
+    Thread(target=run_dummy_server, daemon=True).start()
+    
+    # Запускаем самого Раджу
+    bot.infinity_polling()

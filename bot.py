@@ -55,14 +55,12 @@ def get_history(user_id, limit=10):
     return messages
 
 def ask_grok(messages):
-    # Добавили имитацию браузера (User-Agent), чтобы туннель не блокировал пустые запросы
     headers = {
-        "Authorization": f"Bearer {AITUNNEL_TOKEN}",
-        "Content-Type": "application/json",
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        "Authorization": "Bearer " + AITUNNEL_TOKEN,
+        "Content-Type": "application/json"
     }
     payload = {
-        "model": "grok-4.5", 
+        "model": "x-ai/grok-4.5",  
         "messages": messages,
         "temperature": 0.7
     }

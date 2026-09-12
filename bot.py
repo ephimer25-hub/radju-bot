@@ -201,5 +201,27 @@ def handle_voice(message):
 if __name__ == '__main__':
     init_db()
     print("Раджа запущен...")
+    
+    # Принудительно очищаем старые зависшие сессии в Telegram, убирая конфликт 409
+    try:
+        bot.delete_webhook(drop_pending_updates=True)
+    except:
+        pass
+        
+    # Создаем простейшую веб-заглушку, чтобы Render видел порт и не отключал бота
+    import http.server
+    import socketserver
+    
+    def run_dummy_server():
+        port = int(os.environ.get("PORT", 10000))
+        handler = http.server.SimpleHTTPRequestHandler
+        with socketserver.TCPServer(("", port), handler) as httpd:
+            httpd.serve_forever()
+            
+    # Запускаем сайт в фоновом потоке, чтобы он не мешал работе бота
+    Thread(target=run_dummy_server, daemon=True).start()
+    
+    # Запускаем самого Раджу
     bot.infinity_polling()
+
 

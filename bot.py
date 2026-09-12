@@ -245,12 +245,17 @@ if __name__ == '__main__':
     def run_dummy_server():
         port = int(os.environ.get("PORT", 10000))
         handler = http.server.SimpleHTTPRequestHandler
+        # Разрешаем повторное использование порта, чтобы не было конфликтов
+        socketserver.TCPServer.allow_reuse_address = True
         with socketserver.TCPServer(("", port), handler) as httpd:
             httpd.serve_forever()
             
     # Запускаем сайт в фоновом потоке, чтобы он не мешал работе бота
     Thread(target=run_dummy_server, daemon=True).start()
     
+    # Запускаем самого Раджу БЕЗ повторных вызовов и дубликатов
+    bot.infinity_polling(skip_pending_updates=True)
+
     # Запускаем самого Раджу
     bot.infinity_polling()
 

@@ -72,6 +72,19 @@ def ask_grok(messages):
         return response.json()['choices']['message']['content']
     except Exception as e:
         return f"Ошибка Grok 4.5: {str(e)}"
+def check_for_file_request(message, text):
+    text_lower = text.lower()
+    triggers = ["скинь файл", "отправь документ", "дай таблицу"]
+    if any(trigger in text_lower for trigger in triggers):
+        file_path = "document.xlsx" 
+        if os.path.exists(file_path):
+            with open(file_path, 'rb') as doc:
+                bot.send_document(message.chat.id, doc, caption="Вот документ по твоему запросу.")
+            return True
+        else:
+            bot.reply_to(message, "Файл еще не загружен на server.")
+            return True
+    return False
 
 @bot.message_handler(content_types=['text'])
 def handle_text(message):

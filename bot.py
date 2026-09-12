@@ -197,13 +197,6 @@ def handle_photo(message):
         ],
         "temperature": 0.7
     }
-    
-    try:
-        response = requests.post(AITUNNEL_URL, headers=headers, json=payload, timeout=30)
-        
-        if response.status_code != 200:
-            bot.reply_to(message, "Ошибка ProxyAPI (Код " + str(response.status_code) + "): " + response.text)
-            return
             
         ai_response = response.json()['choices'][0]['message']['content']
         bot.reply_to(message, ai_response)

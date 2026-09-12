@@ -192,7 +192,7 @@ def handle_photo(message):
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": [
                 {"type": "text", "text": message.caption or "Что на фото?"}, 
-                {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}}
+                {"type": "image_url", "image_url": {"url": "data:image/jpeg;base64," + base64_image}}
             ]}
         ],
         "temperature": 0.7

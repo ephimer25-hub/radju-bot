@@ -8,8 +8,8 @@ TELEGRAM_TOKEN = "8804377859:AAF6XGYd_dSXgVOqAfChIvN3viXW93f0mYE"
 AITUNNEL_TOKEN = "sk-aitunnel-051whwYPhpaEB38kc18DownfqjPw5fW1"
 
 # Прямые рабочие эндпоинты без всяких прокси-шлюзов
-AITUNNEL_URL = "https://aitunnel.ru" 
-WHISPER_URL = "https://aitunnel.ru"
+AITUNNEL_URL = "https://api.aitunnel.ru/v1/chat/completions"
+WHISPER_URL = "https://api.aitunnel.ru/v1/audio/transcriptions"
 
 BOT_NAME = "Раджа"
 bot = telebot.TeleBot(TELEGRAM_TOKEN)

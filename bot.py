@@ -73,23 +73,49 @@ def ask_grok(messages):
     except Exception as e:
         return f"Ошибка Grok 4.5: {str(e)}"
 
-@bot.message_handler(commands=['start'])
-def start_cmd(message):
-    bot.reply_to(message, "Привет! Я Раджа. Твой верный друг на базе Grok 4.5. Я полностью готов к работе!")
+@bot.message_handler(content_types=['text'])
+def handle_text(message):
+    user_id = message.chat.id
+    if check_for_file_request(message, message.text):
+        return
+        
+    # Простейшая история только для текущего сообщения, чтобы база данных не ломала код
+    history = [
+        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "user", "content": message.text}
+    ]
+    
+    bot.send_chat_action(user_id, 'typing')
+    ai_response = ask_grok(history)
+    bot.reply_to(message, ai_response, parse_mode="Markdown")
 
-def check_for_file_request(message, text):
-    text_lower = text.lower()
-    triggers = ["скинь файл", "отправь документ", "дай таблицу"]
-    if any(trigger in text_lower for trigger in triggers):
-        file_path = "document.xlsx" 
-        if os.path.exists(file_path):
-            with open(file_path, 'rb') as doc:
-                bot.send_document(message.chat.id, doc, caption="Вот документ по твоему запросу.")
-            return True
-        else:
-            bot.reply_to(message, "Файл еще не загружен на сервер.")
-            return True
-    return False
+@bot.message_handler(content_types=['voice'])
+def handle_voice(message):
+    user_id = message.chat.id
+    bot.send_chat_action(user_id, 'record_audio')
+    file_info = bot.get_file(message.voice.file_id)
+    url = "https://" + "api." + "telegram.org" + "/file/bot" + TELEGRAM_TOKEN + "/" + file_info.file_path
+    audio_data = requests.get(url).content
+
+
+    try:
+        v_res = requests.post(WHISPER_URL, headers={"Authorization": f"Bearer {AITUNNEL_TOKEN}"}, files={'file': ('voice.ogg', audio_data, 'audio/ogg')}, data={'model': 'whisper-1'})
+        user_text = v_res.json().get('text', '')
+    except:
+        bot.reply_to(message, "Не удалось распознать голос.")
+        return
+        
+    if check_for_file_request(message, user_text):
+        return
+        
+    history = [
+        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "user", "content": f"[Голос]: {user_text}"}
+    ]
+    
+    ai_response = ask_grok(history)
+    bot.reply_to(message, f"🎙 *Вы сказали:* {user_text}\n\n*Раджа:* {ai_response}", parse_mode="Markdown")
+
 
 if __name__ == '__main__':
     init_db()

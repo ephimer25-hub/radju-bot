@@ -169,6 +169,7 @@ def handle_text(message):
     save_message(user_id, "assistant", ai_response)
     bot.reply_to(message, ai_response, parse_mode="Markdown")
 
+@bot.message_handler(content_types=['photo'])
 def handle_photo(message):
     user_id = message.chat.id
     bot.send_chat_action(user_id, 'typing')
@@ -179,15 +180,35 @@ def handle_photo(message):
     
     base64_image = base64.b64encode(photo_bytes).decode('utf-8')
     
-    messages = [
-        {"role": "system", "content": SYSTEM_PROMPT},
-        {"role": "user", "content": [
-            {"type": "text", "text": message.caption or "Что на фото?"}, 
-            {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}}
-        ]}
-    ]
-    ai_response = ask_grok(messages)
-    bot.reply_to(message, ai_response)
+    # Заголовки авторизации и payload строго под стандарты ProxyAPI
+    headers = {
+        "Authorization": "Bearer " + AITUNNEL_TOKEN,
+        "Content-Type": "application/json"
+    }
+    
+    payload = {
+        "model": "x-ai/grok-4.5", 
+        "messages": [
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": [
+                {"type": "text", "text": message.caption or "Что на фото?"}, 
+                {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}}
+            ]}
+        ],
+        "temperature": 0.7
+    }
+    
+    try:
+        response = requests.post(AITUNNEL_URL, headers=headers, json=payload, timeout=30)
+        
+        if response.status_code != 200:
+            bot.reply_to(message, "Ошибка ProxyAPI (Код " + str(response.status_code) + "): " + response.text)
+            return
+            
+        ai_response = response.json()['choices'][0]['message']['content']
+        bot.reply_to(message, ai_response)
+    except Exception as e:
+        bot.reply_to(message, "Ошибка при обработке фото: " + str(e))
 
 @bot.message_handler(content_types=['voice'])
 def handle_voice(message):

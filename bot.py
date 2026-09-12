@@ -2,6 +2,7 @@ import os
 import sqlite3
 import requests
 import telebot
+from threading import Thread
 
 # --- НАСТРОЙКИ И ТОКЕНЫ ---
 TELEGRAM_TOKEN = "8804377859:AAF6XGYd_dSXgVOqAfChIvN3viXW93f0mYE"

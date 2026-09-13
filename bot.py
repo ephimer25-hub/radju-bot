@@ -1,6 +1,7 @@
 import os
 import logging
 import httpx
+import asyncio
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 
@@ -8,7 +9,7 @@ from telegram.ext import Application, CommandHandler, MessageHandler, filters, C
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Чистое считывание переменных окружения Render
+# Считывание переменных окружения Render
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN", "").strip()
 PROXY_API_KEY = os.getenv("PROXY_API_KEY")
 RENDER_EXTERNAL_URL = os.getenv("RENDER_EXTERNAL_URL")
@@ -27,7 +28,6 @@ async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     async with httpx.AsyncClient(timeout=30.0) as client:
         try:
-            # Используем точный эндпоинт ProxyAPI
             response = await client.post(
                 'https://proxyapi.ru',  
                 headers={
@@ -52,27 +52,48 @@ async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             logger.error(f"Ошибка при отправке запроса: {e}")
             await update.message.reply_text('Не удалось связаться с сервером ИИ.')
 
-def main() -> None:
-    # Инициализируем приложение. Библиотека сама создаст нужный event loop внутри .run_webhook / .run_polling
+async def main_async() -> None:
+    # Инициализация приложения строго внутри асинхронного цикла
     application = Application.builder().token(TELEGRAM_TOKEN).build()
 
     application.add_handler(CommandHandler('start', start))
     application.add_handler(CommandHandler('help', help_command))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))
 
-    # Логика деплоя
+    # Ручная инициализация компонентов библиотеки (решает проблему с event loop на Python 3.14)
+    await application.initialize()
+    await application.start()
+
     if RENDER_EXTERNAL_URL:
-        logger.info(f"Запуск в режиме Webhook на порту {PORT}")
-        application.run_webhook(
-            listen="0.0.0.0",
-            port=PORT,
-            secret_token="A1b2C3d4E5f6G7h8",  
-            url_path=TELEGRAM_TOKEN,
-            webhook_url=f"{RENDER_EXTERNAL_URL}/{TELEGRAM_TOKEN}"
-        )
+        logger.info(f"Запуск вебхука: {RENDER_EXTERNAL_URL}/{TELEGRAM_TOKEN} на порту {PORT}")
+        # Запускаем внутренний сервер вебхука
+        updater = application.updater
+        if updater:
+            await updater.start_webhook(
+                listen="0.0.0.0",
+                port=PORT,
+                secret_token="A1b2C3d4E5f6G7h8",
+                url_path=TELEGRAM_TOKEN,
+                webhook_url=f"{RENDER_EXTERNAL_URL}/{TELEGRAM_TOKEN}"
+            )
+        
+        # Поддерживаем приложение запущенным вечно
+        while True:
+            await asyncio.sleep(3600)
     else:
-        logger.info("Запуск в режиме Polling (Локально)")
-        application.run_polling()
+        logger.info("Запуск локального Polling")
+        updater = application.updater
+        if updater:
+            await updater.start_polling()
+            while True:
+                await asyncio.sleep(3600)
+
+def main() -> None:
+    # Запуск основного асинхронного цикла с обработкой завершения процесса
+    try:
+        asyncio.run(main_async())
+    except (KeyboardInterrupt, SystemExit):
+        logger.info("Бот остановлен.")
 
 if __name__ == '__main__':
     main()

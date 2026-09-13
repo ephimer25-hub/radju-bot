@@ -57,8 +57,10 @@ async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             logger.error(f"Ошибка при отправке запроса: {e}")
             await update.message.reply_text('Не удалось связаться с сервером ИИ.')
 
-def main() -> None:
-    # Создаем приложение бота
+import asyncio
+
+async def main_async() -> None:
+    # Создаем приложение бота внутри асинхронной функции
     application = Application.builder().token(TELEGRAM_TOKEN).build()
 
     # Регистрируем обработчики команд и сообщений
@@ -66,19 +68,27 @@ def main() -> None:
     application.add_handler(CommandHandler('help', help_command))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))
 
-    # Логика деплоя: если есть URL от Render — запускаем Webhook, иначе — Polling (для тестов на ПК)
+    # Логика деплоя
     if RENDER_EXTERNAL_URL:
         logger.info(f"Запуск в режиме Webhook на порту {PORT}")
-        application.run_webhook(
+        await application.run_webhook(
             listen="0.0.0.0",
             port=PORT,
-            secret_token="A1b2C3d4E5f6G7h8", # Защита вашего вебхука от спама
+            secret_token="A1b2C3d4E5f6G7h8", 
             url_path=TELEGRAM_TOKEN,
             webhook_url=f"{RENDER_EXTERNAL_URL}/{TELEGRAM_TOKEN}"
         )
     else:
         logger.info("Запуск в режиме Polling (Локально)")
-        application.run_polling()
+        await application.run_polling()
+
+def main() -> None:
+    # Явно запускаем event loop, что решает проблему RuntimeError
+    try:
+        asyncio.run(main_async())
+    except KeyboardInterrupt:
+        logger.info("Бот остановлен пользователем")
 
 if __name__ == '__main__':
     main()
+

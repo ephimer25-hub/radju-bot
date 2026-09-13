@@ -1,7 +1,7 @@
 import os
 import logging
 import httpx
-import asyncio  # Импортируем asyncio
+import asyncio
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 
@@ -74,10 +74,9 @@ async def main_async() -> None:
         await application.run_polling()
 
 def main() -> None:
-    try:
-        asyncio.run(main_async())
-    except KeyboardInterrupt:
-        logger.info("Бот остановлен пользователем")
+    # Запускаем только один цикл событий
+    asyncio.run(main_async())
 
 if __name__ == '__main__':
     main()
+

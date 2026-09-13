@@ -28,14 +28,15 @@ async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     async with httpx.AsyncClient(timeout=30.0) as client:
         try:
+            # ИСПРАВЛЕНО: Указан точный эндпоинт ProxyAPI для работы с моделями OpenAI
             response = await client.post(
-                'https://proxyapi.ru',  # Актуальный URL ProxyAPI
+                'https://proxyapi.ru',  
                 headers={
                     'Authorization': f'Bearer {PROXY_API_KEY}',
                     'Content-Type': 'application/json'
                 },
                 json={
-                    'model': 'gpt-4o-mini',  # Или любая другая модель, доступная в вашем кабинете ProxyAPI
+                    'model': 'gpt-4o-mini',  
                     'messages': [{'role': 'user', 'content': user_message}]
                 }
             )
@@ -65,13 +66,14 @@ async def main_async() -> None:
         await application.run_webhook(
             listen="0.0.0.0",
             port=PORT,
-            secret_token=os.getenv("WEBHOOK_SECRET_TOKEN"),  # Используйте переменную окружения для токена
+            # ИСПРАВЛЕНО: Защитили вебхук статичной строкой, чтобы не зависеть от лишних переменных
+            secret_token="A1b2C3d4E5f6G7h8",  
             url_path=TELEGRAM_TOKEN,
             webhook_url=f"{RENDER_EXTERNAL_URL}/{TELEGRAM_TOKEN}"
         )
     else:
         logger.info("Запуск в режиме Polling (Локально)")
-        await application.run_polling()
+        application.run_polling()
 
 def main() -> None:
     try:

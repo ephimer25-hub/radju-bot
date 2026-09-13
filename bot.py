@@ -9,13 +9,12 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 logger = logging.getLogger(__name__)
 
 # Берем токены из Переменных Окружения (Environment Variables) на Render
-# НИКОГДА не вставляйте токены прямо в код!
-TELEGRAM_TOKEN = os.getenv("8804377859:AAHybYDorTb9c4j-o90D2tHYr_x2NNo0qaE")
-PROXY_API_KEY = os.getenv("sk-w7178jSfKD6ttClL6jKlJ67BPKfJDmZL")
+# Пишем строго имена ключей, которые мы создали в панели управления!
+TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
+PROXY_API_KEY = os.getenv("PROXY_API_KEY")
 
 # URL вашего приложения на Render (например, https://onrender.com)
-# Обязательно укажите его в настройках Render (Environment Variables)
-RENDER_EXTERNAL_URL = os.getenv("https://radju-bot.onrender.com") 
+RENDER_EXTERNAL_URL = os.getenv("RENDER_EXTERNAL_URL")
 PORT = int(os.getenv("PORT", 8443))
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:

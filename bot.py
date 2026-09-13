@@ -15,7 +15,7 @@ PROXY_API_KEY = os.getenv("sk-w7178jSfKD6ttClL6jKlJ67BPKfJDmZL")
 
 # URL вашего приложения на Render (например, https://onrender.com)
 # Обязательно укажите его в настройках Render (Environment Variables)
-RENDER_EXTERNAL_URL = os.getenv("RENDER_EXTERNAL_URL") 
+RENDER_EXTERNAL_URL = os.getenv("https://radju-bot.onrender.com") 
 PORT = int(os.getenv("PORT", 8443))
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:

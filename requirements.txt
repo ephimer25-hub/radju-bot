@@ -1,3 +1,2 @@
-python-telegram-bot==20.0  # или последняя актуальная версия
-httpx
-gunicorn
+python-telegram-bot==21.10
+httpx==0.28.1

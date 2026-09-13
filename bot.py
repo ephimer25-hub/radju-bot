@@ -74,8 +74,10 @@ async def main_async() -> None:
         await application.run_polling()
 
 def main() -> None:
-    # Запускаем только один цикл событий
-    asyncio.run(main_async())
+    try:
+        asyncio.run(main_async())
+    except Exception as e:
+        logger.error(f"Ошибка при запуске: {e}")
 
 if __name__ == '__main__':
     main()

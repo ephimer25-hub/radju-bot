@@ -9,11 +9,8 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 logger = logging.getLogger(__name__)
 
 # Берем токены из Переменных Окружения (Environment Variables) на Render
-# Пишем строго имена ключей, которые мы создали в панели управления!
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 PROXY_API_KEY = os.getenv("PROXY_API_KEY")
-
-# URL вашего приложения на Render (например, https://onrender.com)
 RENDER_EXTERNAL_URL = os.getenv("RENDER_EXTERNAL_URL")
 PORT = int(os.getenv("PORT", 8443))
 
@@ -26,21 +23,18 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_message = update.message.text
     
-    # Отправляем пользователю статус, что ИИ "думает"
     await context.bot.send_chat_action(chat_id=update.effective_chat.id, action="typing")
 
-    # Корректный запрос к ProxyAPI (используем стандартный эндпоинт OpenAI-style)
-    # Используем асинхронный httpx вместо синхронного requests, чтобы бот не зависал
     async with httpx.AsyncClient(timeout=30.0) as client:
         try:
             response = await client.post(
-                'https://proxyapi.ru', # Актуальный URL ProxyAPI
+                'https://proxyapi.ru',  # Актуальный URL ProxyAPI
                 headers={
                     'Authorization': f'Bearer {PROXY_API_KEY}',
                     'Content-Type': 'application/json'
                 },
                 json={
-                    'model': 'gpt-4o-mini', # Или любая другая модель, доступная в вашем кабинете ProxyAPI
+                    'model': 'gpt-4o-mini',  # Или любая другая модель, доступная в вашем кабинете ProxyAPI
                     'messages': [{'role': 'user', 'content': user_message}]
                 }
             )
@@ -57,13 +51,9 @@ async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             logger.error(f"Ошибка при отправке запроса: {e}")
             await update.message.reply_text('Не удалось связаться с сервером ИИ.')
 
-import asyncio
-
 async def main_async() -> None:
-    # Создаем приложение бота внутри асинхронной функции
     application = Application.builder().token(TELEGRAM_TOKEN).build()
 
-    # Регистрируем обработчики команд и сообщений
     application.add_handler(CommandHandler('start', start))
     application.add_handler(CommandHandler('help', help_command))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))
@@ -74,7 +64,7 @@ async def main_async() -> None:
         await application.run_webhook(
             listen="0.0.0.0",
             port=PORT,
-            secret_token="A1b2C3d4E5f6G7h8", 
+            secret_token=os.getenv("WEBHOOK_SECRET_TOKEN"),  # Используйте переменную окружения для токена
             url_path=TELEGRAM_TOKEN,
             webhook_url=f"{RENDER_EXTERNAL_URL}/{TELEGRAM_TOKEN}"
         )
@@ -83,7 +73,6 @@ async def main_async() -> None:
         await application.run_polling()
 
 def main() -> None:
-    # Явно запускаем event loop, что решает проблему RuntimeError
     try:
         asyncio.run(main_async())
     except KeyboardInterrupt:
@@ -91,4 +80,3 @@ def main() -> None:
 
 if __name__ == '__main__':
     main()
-

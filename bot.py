@@ -1,8 +1,22 @@
 import os
+import sys
+import subprocess
 import logging
-import httpx
-import asyncio
+
+# Автоматическая установка библиотек прямо при старте скрипта
+# Это полностью решает проблему с ModuleNotFoundError и багами кэша Render
+try:
+    import httpx
+    import telegram
+except ModuleNotFoundError:
+    logging.basicConfig(level=logging.INFO)
+    logging.info("Установка недостающих зависимостей на сервер...")
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "python-telegram-bot[webhooks]==21.10", "httpx==0.28.1"])
+    # Перезапускаем этот же скрипт, чтобы применились установленные библиотеки
+    os.execv(sys.executable, ['python'] + sys.argv)
+
 import base64
+import asyncio
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 
@@ -26,7 +40,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text('Просто отправьте мне текст, фотографию или запишите голосовое сообщение — и я отвечу вам.')
 
-# Общая функция для отправки запросов в Grok 4.5 через ProxyAPI
 async def ask_grok(messages_payload: list) -> str:
     async with httpx.AsyncClient(timeout=60.0) as client:
         try:
@@ -51,7 +64,6 @@ async def ask_grok(messages_payload: list) -> str:
             logger.error(f"Ошибка при связи с ProxyAPI: {e}")
             return 'Не удалось связаться с сервером ИИ.'
 
-# Обработка ТЕКСТА
 async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_message = update.message.text
     await context.bot.send_chat_action(chat_id=update.effective_chat.id, action="typing")
@@ -60,7 +72,6 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
     reply = await ask_grok(payload)
     await update.message.reply_text(reply)
 
-# Обработка ИЗОБРАЖЕНИЙ (Зрение Grok 4.5)
 async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await context.bot.send_chat_action(chat_id=update.effective_chat.id, action="typing")
     
@@ -86,7 +97,6 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     reply = await ask_grok(payload)
     await update.message.reply_text(reply)
 
-# Обработка ГОЛОСОВЫХ СООБЩЕНИЙ (через Whisper)
 async def handle_voice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await context.bot.send_chat_action(chat_id=update.effective_chat.id, action="typing")
     
@@ -166,3 +176,4 @@ def main() -> None:
 
 if __name__ == '__main__':
     main()
+

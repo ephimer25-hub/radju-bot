@@ -2,16 +2,14 @@ services:
   - type: web
     name: radju-bot
     runtime: python
-    # Указываем стабильную версию Python (3.11 или 3.10 предпочтительнее для python-telegram-bot)
     runtimeVersion: "3.11.9" 
 
-    # Команда сборки зависимостей
-    buildCommand: pip install -r requirements.txt
+    # Исправлено: принудительно ставим библиотеки при сборке
+    buildCommand: pip install "python-telegram-bot[webhooks]==21.10" httpx==0.28.1
 
-    # ИСПРАВЛЕНО: Прямой асинхронный запуск скрипта бота без gunicorn
+    # Исправлено: запускаем напрямую через питон, без gunicorn
     startCommand: python bot.py
 
-    # ИСПРАВЛЕНО: Обязательные переменные окружения для работы Раджу
     envVars:
       - key: TELEGRAM_TOKEN
         sync: false

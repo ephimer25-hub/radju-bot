@@ -1,7 +1,6 @@
 import os
 import logging
 import httpx
-import asyncio
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 
@@ -9,7 +8,7 @@ from telegram.ext import Application, CommandHandler, MessageHandler, filters, C
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Берем токены из Переменных Окружения (Environment Variables) на Render
+# Чистое считывание переменных окружения Render
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN", "").strip()
 PROXY_API_KEY = os.getenv("PROXY_API_KEY")
 RENDER_EXTERNAL_URL = os.getenv("RENDER_EXTERNAL_URL")
@@ -28,7 +27,7 @@ async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     async with httpx.AsyncClient(timeout=30.0) as client:
         try:
-            # ИСПРАВЛЕНО: Указан точный эндпоинт ProxyAPI для работы с моделями OpenAI
+            # Используем точный эндпоинт ProxyAPI
             response = await client.post(
                 'https://proxyapi.ru',  
                 headers={
@@ -53,7 +52,8 @@ async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             logger.error(f"Ошибка при отправке запроса: {e}")
             await update.message.reply_text('Не удалось связаться с сервером ИИ.')
 
-async def main_async() -> None:
+def main() -> None:
+    # Инициализируем приложение. Библиотека сама создаст нужный event loop внутри .run_webhook / .run_polling
     application = Application.builder().token(TELEGRAM_TOKEN).build()
 
     application.add_handler(CommandHandler('start', start))
@@ -63,10 +63,9 @@ async def main_async() -> None:
     # Логика деплоя
     if RENDER_EXTERNAL_URL:
         logger.info(f"Запуск в режиме Webhook на порту {PORT}")
-        await application.run_webhook(
+        application.run_webhook(
             listen="0.0.0.0",
             port=PORT,
-            # ИСПРАВЛЕНО: Защитили вебхук статичной строкой, чтобы не зависеть от лишних переменных
             secret_token="A1b2C3d4E5f6G7h8",  
             url_path=TELEGRAM_TOKEN,
             webhook_url=f"{RENDER_EXTERNAL_URL}/{TELEGRAM_TOKEN}"
@@ -74,12 +73,6 @@ async def main_async() -> None:
     else:
         logger.info("Запуск в режиме Polling (Локально)")
         application.run_polling()
-
-def main() -> None:
-    try:
-        asyncio.run(main_async())
-    except Exception as e:
-        logger.error(f"Ошибка при запуске: {e}")
 
 if __name__ == '__main__':
     main()

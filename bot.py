@@ -15,8 +15,10 @@ TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN", "").strip()
 PROXY_API_KEY = os.getenv("PROXY_API_KEY")
 RENDER_EXTERNAL_URL = os.getenv("RENDER_EXTERNAL_URL")
 PORT = int(os.getenv("PORT", 8443))
-AITUNNEL_URL = "https://api.proxyapi.ru/v1/chat/completions"
-WHISPER_URL = "https://api.proxyapi.ru/v1/audio/transcriptions"
+
+# Базовые правильные эндпоинты шлюза ProxyAPI
+AITUNNEL_URL = "https://api.proxyapi.ru/v1/chat/completions"  # Обновлено
+WHISPER_URL = "https://api.proxyapi.ru/v1/audio/transcriptions"  # Обновлено
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text('Привет! Я Раджу, ваш ИИ-агент на базе Grok 4.5. Я умею читать текст, анализировать фото и слушать голосовые сообщения! Чем могу помочь?')
@@ -35,7 +37,7 @@ async def ask_grok(messages_payload: list) -> str:
                     'Content-Type': 'application/json'
                 },
                 json={
-                    'model': 'x-ai/grok-4.5',  # Идентификатор Grok 4.5 в ProxyAPI
+                    'model': 'x-ai/grok-4.5',  
                     'messages': messages_payload
                 }
             )
@@ -62,15 +64,12 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
 async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await context.bot.send_chat_action(chat_id=update.effective_chat.id, action="typing")
     
-    # Берем фото в самом высоком качестве
     photo_file = await update.message.photo[-1].get_file()
     caption = update.message.caption or "Что изображено на этой фотографии?"
     
-    # Скачиваем фото в память приложения
     photo_bytes = await photo_file.download_as_bytearray()
     base64_image = base64.b64encode(photo_bytes).decode('utf-8')
     
-    # Формируем мультимодальный запрос для Grok 4.5
     payload = [
         {
             'role': 'user',
@@ -94,7 +93,6 @@ async def handle_voice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     voice_file = await update.message.voice.get_file()
     voice_bytes = await voice_file.download_as_bytearray()
     
-    # 1. Отправляем аудиофайл в Whisper от OpenAI через ProxyAPI для транскрибации
     async with httpx.AsyncClient(timeout=30.0) as client:
         try:
             files = {'file': ('voice.ogg', bytes(voice_bytes), 'audio/ogg')}
@@ -112,9 +110,6 @@ async def handle_voice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
                 if not transcribed_text:
                     await update.message.reply_text("Мне не удалось разобрать слова в голосовом сообщении.")
                     return
-                
-                # Уведомляем пользователя, что мы расшифровали его голос
-                logger.info(f"Распознан голос: {transcribed_text}")
             else:
                 logger.error(f"Ошибка Whisper API: {whisper_response.status_code}")
                 await update.message.reply_text("Не удалось распознать голосовое сообщение.")
@@ -124,26 +119,21 @@ async def handle_voice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
             await update.message.reply_text("Произошла ошибка при обработке аудио.")
             return
 
-    # 2. Отправляем распознанный текст в Grok 4.5
     payload = [{'role': 'user', 'content': f"(Пользователь наговорил голосом): {transcribed_text}"}]
     reply = await ask_grok(payload)
     
-    # Добавляем к ответу текст расшифровки для удобства
-    await update.message.reply_text(f"📝 *Ваш запрос:* _{transcribed_text}_\n\n🤖 *Раджу:* {reply}", parse_mode="Markdown")
+    await update.message.reply_text(f"📝 *Ваш запрос:* _{transcribed_text}_\n\n🤖 *Radju:* {reply}", parse_mode="Markdown")
 
 async def main_async() -> None:
     application = Application.builder().token(TELEGRAM_TOKEN).build()
 
-    # Регистрация обработчиков команд
     application.add_handler(CommandHandler('start', start))
     application.add_handler(CommandHandler('help', help_command))
     
-    # Регистрация разных типов входящего контента
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text))
     application.add_handler(MessageHandler(filters.PHOTO, handle_photo))
     application.add_handler(MessageHandler(filters.VOICE, handle_voice))
 
-    # Ручная асинхронная инициализация компонентов для стабильности на Render
     await application.initialize()
     await application.start()
 

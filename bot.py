@@ -15,6 +15,8 @@ TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN", "").strip()
 PROXY_API_KEY = os.getenv("PROXY_API_KEY")
 RENDER_EXTERNAL_URL = os.getenv("RENDER_EXTERNAL_URL")
 PORT = int(os.getenv("PORT", 8443))
+AITUNNEL_URL = "https://api.proxyapi.ru/v1/chat/completions"
+WHISPER_URL = "https://api.proxyapi.ru/v1/audio/transcriptions"
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text('Привет! Я Раджу, ваш ИИ-агент на базе Grok 4.5. Я умею читать текст, анализировать фото и слушать голосовые сообщения! Чем могу помочь?')
@@ -27,7 +29,7 @@ async def ask_grok(messages_payload: list) -> str:
     async with httpx.AsyncClient(timeout=60.0) as client:
         try:
             response = await client.post(
-                'https://proxyapi.ru',  
+                AITUNNEL_URL,  
                 headers={
                     'Authorization': f'Bearer {PROXY_API_KEY}',
                     'Content-Type': 'application/json'
@@ -99,7 +101,7 @@ async def handle_voice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
             data = {'model': 'whisper-1'}
             
             whisper_response = await client.post(
-                'https://proxyapi.ru',
+                WHISPER_URL,
                 headers={'Authorization': f'Bearer {PROXY_API_KEY}'},
                 files=files,
                 data=data
